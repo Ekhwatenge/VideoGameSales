@@ -38,7 +38,7 @@ Ensure that these packages are installed before running the script.
 
 ## Usage
 Clone this repository to your local machine.
-git clone https://github.com/username/VideoGameSalesAnalysis.git
+git clone (https://github.com/Ekhwatenge/VideoGameSales/tree/main)
 Open the VideoGameSalesAnalysis.R file in RStudio or your preferred R editor.
 Load the dataset (vgsales.csv) by placing it in the project directory.
 Run the script sections individually or as a whole to generate the analysis and visualizations.
