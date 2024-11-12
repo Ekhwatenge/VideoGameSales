@@ -1,0 +1,232 @@
+---
+title: "VideoGameSales"
+author: "Elvira Khwatenge"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+The dataset analyzed in this report includes details on video game sales across different platforms, genres, and regions. The objective of this analysis is to uncover insights into sales trends over time, platform and genre performance, and regional preferences, which can inform strategic decision-making in game development and marketing.
+
+The dataset contains the following columns:
+
+**Rank**: Ranking of the game based on global sales.
+**Name**: Title of the game.
+**Platform**: The platform (e.g., Wii, NES) on which the game was released.
+**Year**: Release year of the game.
+**Genre**: Genre of the game (e.g., Sports, Racing).
+**Publisher**: The company that published the game.
+NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales: Sales in millions by region and globally.
+
+
+## 1: Sales Trends Over Time
+To analyze seasonal trends and lifecycle patterns, we’ll start by checking sales over time and by season.
+
+1. Convert the Year column to a proper date format.
+2. Group sales data by year to see trends over time.
+3. Identify seasonal spikes by aggregating sales based on months or quarters if such details are available. If we only have yearly data, we can focus on yearly trends.
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+
+# Load data
+vg_data <- read.csv("vgsales.csv")
+
+# Step 1: Convert Year column to integer (if it has decimals)
+vg_data <- vg_data %>% mutate(Year = as.integer(Year))
+
+# Step 2: Sales Trends Over Time - Summing up Global Sales by Year
+yearly_sales <- vg_data %>%
+  group_by(Year) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales, na.rm = TRUE))
+
+# Plotting the sales trend over time
+ggplot(yearly_sales, aes(x = Year, y = Total_Global_Sales)) +
+  geom_line() +
+  labs(title = "Global Sales Trends Over Time", x = "Year", y = "Total Global Sales (millions)") +
+  theme_minimal()
+```
+
+## 2. Platform Performance
+
+Objective: Determine which platforms are most popular and if certain genres are more successful on specific platforms.
+
+```{r}
+# Platform Popularity - Summing up Global Sales by Platform
+platform_sales <- vg_data %>%
+  group_by(Platform) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales, na.rm = TRUE)) %>%
+  arrange(desc(Total_Global_Sales))
+
+# Plotting Platform Popularity
+ggplot(platform_sales, aes(x = reorder(Platform, -Total_Global_Sales), y = Total_Global_Sales)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Sales by Platform", x = "Platform", y = "Total Global Sales (millions)") +
+  theme_minimal() +
+  coord_flip()  # To make the platform names readable
+
+# Platform-Specific Preferences - Summing up Global Sales by Platform and Genre
+platform_genre_sales <- vg_data %>%
+  group_by(Platform, Genre) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales, na.rm = TRUE)) %>%
+  arrange(desc(Total_Global_Sales))
+
+# Plotting Platform-Specific Preferences
+ggplot(platform_genre_sales, aes(x = reorder(Platform, -Total_Global_Sales), y = Total_Global_Sales, fill = Genre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Platform-Specific Preferences by Genre", x = "Platform", y = "Total Global Sales (millions)") +
+  theme_minimal() +
+  coord_flip()
+```
+## 3. Genre Trends
+Objective: Identify the top-performing genres and spot trending genres with recent growth in popularity.
+
+```{r}
+# Top-Performing Genres - Summing up Global Sales by Genre
+genre_sales <- vg_data %>%
+  group_by(Genre) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales, na.rm = TRUE)) %>%
+  arrange(desc(Total_Global_Sales))
+
+# Plotting Genre Popularity
+ggplot(genre_sales, aes(x = reorder(Genre, -Total_Global_Sales), y = Total_Global_Sales)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Sales by Genre", x = "Genre", y = "Total Global Sales (millions)") +
+  theme_minimal()
+
+# Emerging Genres - Summing up Global Sales by Genre over Time (if we have year data)
+genre_trends <- vg_data %>%
+  filter(!is.na(Year)) %>%
+  group_by(Year, Genre) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales, na.rm = TRUE))
+
+# Plotting Genre Trends Over Time
+ggplot(genre_trends, aes(x = Year, y = Total_Global_Sales, color = Genre)) +
+  geom_line() +
+  labs(title = "Genre Sales Trends Over Time", x = "Year", y = "Total Global Sales (millions)") +
+  theme_minimal()
+```
+
+## 4. Regional Analysis
+
+Objective: Identify which regions contribute the most to global sales and examine region-specific preferences.
+
+```{r}
+library(tidyr)
+
+# Regional Sales Distribution - Summing up Sales by Region
+regional_sales <- vg_data %>%
+  summarise(NA_Sales = sum(NA_Sales, na.rm = TRUE),
+            EU_Sales = sum(EU_Sales, na.rm = TRUE),
+            JP_Sales = sum(JP_Sales, na.rm = TRUE),
+            Other_Sales = sum(Other_Sales, na.rm = TRUE))
+
+# Reshape data for plotting
+regional_sales_long <- regional_sales %>%
+  gather(key = "Region", value = "Total_Sales")
+
+# Plotting Regional Sales Distribution
+ggplot(regional_sales_long, aes(x = Region, y = Total_Sales)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Sales by Region", x = "Region", y = "Total Sales (millions)") +
+  theme_minimal()
+
+# Localized Preferences - Summing up Sales by Genre and Region
+regional_genre_sales <- vg_data %>%
+  group_by(Region = "NA_Sales", Genre) %>%
+  summarise(NA_Sales = sum(NA_Sales, na.rm = TRUE),
+            EU_Sales = sum(EU_Sales, na.rm = TRUE),
+            JP_Sales = sum(JP_Sales, na.rm = TRUE),
+            Other_Sales = sum(Other_Sales, na.rm = TRUE))
+
+# Plotting Regional Preferences by Genre (NA example)
+ggplot(regional_genre_sales, aes(x = reorder(Genre, -NA_Sales), y = NA_Sales)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Genre Preferences in North America", x = "Genre", y = "Sales (millions)") +
+  theme_minimal() +
+  coord_flip()
+```
+
+## 5. Regional Analysis (Customized for Existing Columns)
+The dataset contains columns for NA_Sales, EU_Sales, JP_Sales, and Other_Sales, which represent sales in North America, Europe, Japan, and other regions, respectively.
+
+```{r}
+
+# Regional Sales Distribution - Summing up Sales by Region
+regional_sales <- vg_data %>%
+  summarise(NA_Sales = sum(NA_Sales, na.rm = TRUE),
+            EU_Sales = sum(EU_Sales, na.rm = TRUE),
+            JP_Sales = sum(JP_Sales, na.rm = TRUE),
+            Other_Sales = sum(Other_Sales, na.rm = TRUE))
+
+# Reshape data for plotting
+regional_sales_long <- regional_sales %>%
+  pivot_longer(cols = everything(), names_to = "Region", values_to = "Total_Sales")
+
+# Plotting Regional Sales Distribution
+ggplot(regional_sales_long, aes(x = Region, y = Total_Sales)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Sales by Region", x = "Region", y = "Total Sales (millions)") +
+  theme_minimal()
+
+```
+
+## Localized Preferences by Genre
+If we want to break down preferences by genre within each region, we can filter by genre and visualize how sales vary across regions.
+
+```{r}
+# Localized Preferences - Summing up Sales by Genre and Region
+regional_genre_sales <- vg_data %>%
+  group_by(Genre) %>%
+  summarise(NA_Sales = sum(NA_Sales, na.rm = TRUE),
+            EU_Sales = sum(EU_Sales, na.rm = TRUE),
+            JP_Sales = sum(JP_Sales, na.rm = TRUE),
+            Other_Sales = sum(Other_Sales, na.rm = TRUE))
+
+# Reshape data for plotting
+regional_genre_sales_long <- regional_genre_sales %>%
+  pivot_longer(cols = -Genre, names_to = "Region", values_to = "Total_Sales")
+
+# Plotting Genre Preferences by Region
+ggplot(regional_genre_sales_long, aes(x = reorder(Genre, -Total_Sales), y = Total_Sales, fill = Region)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Genre Preferences by Region", x = "Genre", y = "Total Sales (millions)") +
+  theme_minimal() +
+  coord_flip()
+```
+
+## Sales Trends Over Time
+This analysis focuses on identifying sales patterns over time, particularly any seasonal spikes and general lifecycle patterns.
+
+Sales data aggregated by year indicates fluctuating global sales trends, with peak periods around specific years.Observing sales over time helps identify the lifecycle of video games, revealing when interest in games tends to peak or wane, which can guide release timings and marketing strategies.
+
+## Platform Performance
+This section assesses which gaming platforms are most popular and explores platform-specific genre preferences.
+
+Platforms like PS2, X360, and PS3 lead in global sales, with notable sales figures also observed for Wii, DS, and other legacy platforms. Certain genres, such as action and sports, perform differently across platforms. For example, platforms like PS2 and Wii show strong sales for sports and action genres, reflecting platform-based audience preferences that can guide genre-specific investments.
+
+## Genre Trends
+Analyzing genre trends provides insights into which genres are most popular and helps in spotting emerging trends.
+
+Action, sports, and shooter games have the highest sales, making them the most commercially successful genres.
+By observing genre sales over time, some genres show rising popularity in recent years, indicating potential growth areas for investment.
+
+## Regional Analysis
+This section examines regional contributions to global sales and explores region-specific genre preferences.
+
+North America (NA) leads in total sales, followed by Europe (EU) and Japan (JP), with other regions contributing a smaller portion. Genre preferences vary by region. For instance, sports and action genres are popular in North America, while role-playing games have stronger sales in Japan, suggesting opportunities for regionalized content and marketing strategies.
+
+## Customized Regional Analysis
+The analysis further breaks down sales by region using specific genre filters to explore preferences in detail. Each region has distinct genre preferences, with genres like action and shooter performing well in North America, while role-playing games dominate in Japan. This data supports localized marketing efforts and content customization based on regional tastes.
+
+## Conclusion
+The VideoGameSales analysis reveals insights into trends over time, platform and genre performance, and regional preferences. Key recommendations include focusing on popular platforms (e.g., PS2, Wii) for established genres, leveraging emerging genre trends, and implementing region-specific strategies to optimize sales. 
+

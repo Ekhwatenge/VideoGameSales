@@ -1,0 +1,84 @@
+6. Customer Behavior and Retention
+6.1 Repeat Purchases
+If you have data on customer IDs and their purchases, you can analyze which games tend to lead to repeat purchases, particularly for sequels or expansion packs.
+
+```{r}
+
+# Sample data columns: Customer_ID, Game_Name, Purchase_Date
+
+# Count repeat purchases for each game
+repeat_purchases <- vg_data %>%
+  group_by(Name) %>%
+  summarise(Repeat_Purchases = n_distinct(Customer_ID)) %>%
+  arrange(desc(Repeat_Purchases))
+
+# Plotting Repeat Purchases by Game
+ggplot(repeat_purchases, aes(x = reorder(Name, -Repeat_Purchases), y = Repeat_Purchases)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Repeat Purchases by Game", x = "Game", y = "Number of Repeat Purchases") +
+  theme_minimal() +
+  coord_flip()
+```
+
+6.2 Churn Analysis
+If you have subscription data (e.g., Customer_ID, Subscription_Status, Last_Active_Date), you can track churn rates.
+
+```{r}
+# Sample data columns: Customer_ID, Subscription_Status, Last_Active_Date
+
+# Churn Rate Calculation
+churn_data <- vg_data %>%
+  filter(Subscription_Status == "Inactive") %>%
+  mutate(Churn_Rate = n_distinct(Customer_ID) / n_distinct(Customer_ID[Subscription_Status == "Active"]))
+
+# Plotting Churn Rate
+ggplot(churn_data, aes(x = Subscription_Status, y = Churn_Rate)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  labs(title = "Customer Churn Rate", x = "Subscription Status", y = "Churn Rate") +
+  theme_minimal()
+```
+
+7. Marketing and Review Analysis
+Use text reviews and marketing spend data for Review Sentiment Analysis and Marketing Spend Efficiency.
+
+7.1 Review Sentiment Analysis
+analyze the text of customer reviews. Assuming you have a Review_Text and Rating column, use text analysis libraries in R like tidytext.
+
+```{r}
+
+# Sample data columns: Review_Text, Rating
+
+# Tokenize and calculate sentiment scores for each review
+reviews <- vg_data %>%
+  unnest_tokens(word, Review_Text) %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(sentiment, sort = TRUE)
+
+# Plotting Sentiment Analysis
+ggplot(reviews, aes(x = sentiment, y = n)) +
+  geom_bar(stat = "identity", fill = "darkblue") +
+  labs(title = "Review Sentiment Analysis", x = "Sentiment", y = "Frequency") +
+  theme_minimal()
+```
+
+7.2 Marketing Spend Efficiency
+Assuming Marketing_Spend and Sales columns are present, you could calculate the return on marketing investment (ROMI) by comparing sales impact per marketing dollar spent.
+
+```{r}
+# Sample data columns: Marketing_Spend, Global_Sales
+
+# Calculating ROMI (Return on Marketing Investment)
+marketing_efficiency <- vg_data %>%
+  group_by(Game_Name) %>%
+  summarise(Total_Marketing_Spend = sum(Marketing_Spend, na.rm = TRUE),
+            Total_Sales = sum(Global_Sales, na.rm = TRUE)) %>%
+  mutate(ROMI = Total_Sales / Total_Marketing_Spend)
+
+# Plotting ROMI by Game
+ggplot(marketing_efficiency, aes(x = reorder(Game_Name, -ROMI), y = ROMI)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Return on Marketing Investment by Game", x = "Game", y = "ROMI") +
+  theme_minimal() +
+  coord_flip()
+```
+
