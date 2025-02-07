@@ -16,10 +16,10 @@ The dataset contains information on video game sales, including the following co
 - NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales: Sales in millions by region and globally.
 
 ## Analysis Objectives
-Sales Trends Over Time: Analyze sales patterns to identify seasonal trends and lifecycle patterns.
-Platform Performance: Evaluate the popularity of different gaming platforms and examine platform-specific genre preferences.
-Genre Trends: Identify top-performing genres and spot emerging genres with recent growth in popularity.
-Regional Analysis: Examine regional contributions to global sales and analyze region-specific genre preferences.
+- Sales Trends Over Time: Analyze sales patterns to identify seasonal trends and lifecycle patterns.
+- Platform Performance: Evaluate the popularity of different gaming platforms and examine platform-specific genre preferences.
+- Genre Trends: Identify top-performing genres and spot emerging genres with recent growth in popularity.
+- Regional Analysis: Examine regional contributions to global sales and analyze region-specific genre preferences.
 
 ## Project Structure
 The project contains the following sections:
